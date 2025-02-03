@@ -54,9 +54,24 @@ function PaymentPage() {
       name: "Happy Coders",
       description: "Payment to Happy Coders",
       image: "https://papayacoders.com/demo.png",
-      handler: function (response) {
+      handler: async function (response) {
         setResponseId(response.razorpay_payment_id);
-        navigate("/success"); // Redirect to success page
+  
+        try {
+          // Capture the payment
+          const captureResponse = await axios.post(
+            `http://localhost:5000/capture/${response.razorpay_payment_id}`,
+            { amount: amt }, // Amount should be the same as the order amount
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+  
+          console.log("Capture Response:", captureResponse.data);
+  
+          // Navigate to success page after capturing payment
+          navigate("/success");
+        } catch (error) {
+          console.error("Error capturing payment:", error);
+        }
       },
       prefill: {
         name: "Happu",

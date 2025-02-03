@@ -39,7 +39,21 @@ app.post('/orders', async(req, res) => {
         res.status(500).send("Internal server error")
     }
 })
-
+// Capture Payment
+app.post('/capture/:paymentId', async (req, res) => {
+    try {
+      const paymentId = req.params.paymentId;
+      const { amount } = req.body;
+      const razorpay = new Razorpay({
+        key_id: 'rzp_test_t5oXX1D06xFAam',
+        key_secret: '3qy7ZzDKeUvZgBeI6o0B6Rm9',
+      });
+      const response = await razorpay.payments.capture(paymentId, amount, 'INR');
+      res.json({ success: true, response });
+    } catch (error) {
+      res.status(500).json({ success: false, error });
+    }
+  });
 app.get("/payment/:paymentId", async(req, res) => {
     const {paymentId} = req.params;
 
