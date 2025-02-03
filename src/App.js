@@ -1,11 +1,15 @@
 import './App.css';
-import axios from 'axios'
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import Success from './components/Success';
+import Canceled from './components/Canceled';
 
-function App() {
+function PaymentPage() {
   const [responseId, setResponseId] = useState("");
   const [responseState, setResponseState] = useState([]);
-  const [amount, setAmount] = useState(0); // Added state for amount
+  const [amount, setAmount] = useState(0);
+  const navigate = useNavigate(); // React Router navigation
 
   const loadScript = (src) => {
     return new Promise((resolve) => {
@@ -17,29 +21,22 @@ function App() {
     });
   };
 
-  const createRazorpayOrder = (amt) => {
-    setAmount(amt); // Set amount in state
-    let data = JSON.stringify({
-      amount: amt * 100,
-      currency: "INR"
-    });
-
-    let config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: "http://localhost:5000/orders",
-      headers: { 'Content-Type': 'application/json' },
-      data: data
-    };
-
-    axios.request(config)
-      .then((response) => {
-        console.log(JSON.stringify(response.data));
-        handleRazorpayScreen(response.data.amount);
-      })
-      .catch((error) => {
-        console.log("Error at", error);
+  const createRazorpayOrder = async (amt) => {
+    try {
+      setAmount(amt);
+      const response = await axios.post("http://localhost:5000/orders", {
+        amount: amt * 100,
+        currency: "INR",
+      }, {
+        headers: { 'Content-Type': 'application/json' }
       });
+
+      console.log("Order Response:", response.data.amount);
+      handleRazorpayScreen(response.data.amount);
+
+    } catch (error) {
+      console.error("Error creating Razorpay order:", error);
+    }
   };
 
   const handleRazorpayScreen = async (amt) => {
@@ -54,18 +51,24 @@ function App() {
       key: 'rzp_test_t5oXX1D06xFAam',
       amount: amt,
       currency: 'INR',
-      name: "Papaya Coders",
-      description: "Payment to Papaya Coders",
+      name: "Happy Coders",
+      description: "Payment to Happy Coders",
       image: "https://papayacoders.com/demo.png",
       handler: function (response) {
         setResponseId(response.razorpay_payment_id);
+        navigate("/success"); // Redirect to success page
       },
       prefill: {
-        name: "Papaya Coders",
-        email: "papayacoders@gmail.com"
+        name: "Happu",
+        email: "0000ankit0000jangid@gmail.com"
       },
       theme: {
-        color: "#F4C430"
+        color: "#F2C830"
+      },
+      modal: {
+        ondismiss: function () {
+          navigate("/canceled"); // Redirect to canceled page if closed
+        }
       }
     };
 
@@ -88,10 +91,10 @@ function App() {
   };
 
   useEffect(() => {
-    if (!responseId) return; // Prevent running when responseId is empty
+    if (!responseId) return;
 
     let data = JSON.stringify({
-      amount: amount * 100, // Use the stored amount from state
+      amount: amount * 100,
     });
 
     let config = {
@@ -109,7 +112,7 @@ function App() {
       .catch((error) => {
         console.log("Error at", error);
       });
-  }, [responseId, amount]); // Include amount in dependency array
+  }, [responseId, amount]);
 
   return (
     <div className="App">
@@ -129,6 +132,18 @@ function App() {
         )}
       </form>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<PaymentPage />} />
+        <Route path="/success" element={<Success />} />
+        <Route path="/canceled" element={<Canceled />} />
+      </Routes>
+    </Router>
   );
 }
 
